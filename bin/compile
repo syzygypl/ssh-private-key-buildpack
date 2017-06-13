@@ -22,18 +22,18 @@ if [ "$ssh_key" != "" ]; then
 	ln -s "$1/.ssh" "$HOME/.ssh"
 	echo "$ssh_key" | base64 --decode > "$HOME/.ssh/id_rsa"
 
-	IFS=',' read -ra HOST <<< "$ssh_hosts"
-	for i in "${HOST[@]}"; do
-		echo "Adding $i to known hosts" | indent		
-		IFS=: read -r domain port <<< "$i";
-		ssh-keyscan -p ${port:-22} $domain > "$HOME/.ssh/known_hosts" 2>&1 | indent
-	done
-	
 	if [ -n "$ssh_config" ]; then
 		echo "Setting up SSH" | indent
 	        base64 --decode <<< "$ssh_config" > "$HOME/.ssh/config" 
 	fi
 
+	IFS=',' read -ra HOST <<< "$ssh_hosts"
+	for i in "${HOST[@]}"; do
+		echo "Adding $i to known hosts" | indent		
+		IFS=: read -r domain port <<< "$i";
+		ssh -oStrictHostKeyChecking=no -T -p ${port:-22} $domain 2>&1 | indent
+	done
+	
 	exit 0
 else
 	echo "-----> No SSH private key"
